@@ -4,6 +4,16 @@ import yfinance as yf
 import pandas as pd
 from datetime import date
 import math
+import time
+
+try:
+    # Try to import curl_cffi to handle Yahoo Finance rate limits
+    from curl_cffi import requests
+    USE_CURL_CFFI = True
+except ImportError:
+    USE_CURL_CFFI = False
+    print("curl_cffi not installed. Using standard requests instead.")
+    print("To avoid rate limits, install curl_cffi: pip install curl_cffi")
 
 def controlIndex(ind):
     today = date.today()
@@ -242,23 +252,36 @@ def read_data(ind): # Checked
     Adds column indicating day of the week
     Adds column for year, month, and day
     """
-    index_ticker = yf.Ticker(ind)
-    index_data = pd.DataFrame(index_ticker.history(period="max"))
-    index_data['Date'] = index_data.index
-    index_data.index.rename('Date_index', inplace=True)
-    weekday_map = {0:'Monday',1:'Tuesday',2:'Wednesday',3:'Thursday',4:'Friday'}
-    #index_data['WeekDay'] = index_data.Date.dt.dayofweek.map(weekday_map) # Add WeekDay column
-    index_data['WeekDay'] = index_data.Date.dt.dayofweek
-    index_data['Week'] = index_data.Date.dt.week
-    index_data['Year'] = index_data.Date.dt.year
-    index_data['Month'] = index_data.Date.dt.month
-    index_data['Day'] = index_data.Date.dt.day
-    index_data = index_data[::-1]
-    index_data['Diff%'] = 100*(index_data.Close/index_data.Close.shift(-1)-1)
-    #index_data.Date = index_data.Date.astype(str)
-    index_data.dropna(inplace=True)
-    index_data.drop(columns = ['Dividends','Stock Splits'], inplace = True)
-    return index_data
+    try:
+        if USE_CURL_CFFI:
+            # Create a session that impersonates Chrome to avoid rate limits
+            session = requests.Session(impersonate="chrome")
+            index_ticker = yf.Ticker(ind, session=session)
+        else:
+            index_ticker = yf.Ticker(ind)
+            
+        # Add delay to avoid rate limiting
+        time.sleep(1)
+        
+        index_data = pd.DataFrame(index_ticker.history(period="max"))
+        index_data['Date'] = index_data.index
+        index_data.index.rename('Date_index', inplace=True)
+        weekday_map = {0:'Monday',1:'Tuesday',2:'Wednesday',3:'Thursday',4:'Friday'}
+        #index_data['WeekDay'] = index_data.Date.dt.dayofweek.map(weekday_map) # Add WeekDay column
+        index_data['WeekDay'] = index_data.Date.dt.dayofweek
+        index_data['Week'] = index_data.Date.dt.week
+        index_data['Year'] = index_data.Date.dt.year
+        index_data['Month'] = index_data.Date.dt.month
+        index_data['Day'] = index_data.Date.dt.day
+        index_data = index_data[::-1]
+        index_data['Diff%'] = 100*(index_data.Close/index_data.Close.shift(-1)-1)
+        #index_data.Date = index_data.Date.astype(str)
+        index_data.dropna(inplace=True)
+        index_data.drop(columns = ['Dividends','Stock Splits'], inplace = True)
+        return index_data
+    except Exception as e:
+        print(f"Error fetching data for {ind}: {e}")
+        raise
 
 def read_data_csv(index_data): # Checked
     """
@@ -398,7 +421,6 @@ def calculos_table(data, semanas=20):
     ind = str(semanas)+' Setmanes'
     promedios_calc = pd.DataFrame(promedios_calc, index=[ind]).T
     return data_f.head(semanas), promedios_calc
-
 
 def tablas_diario(data_i):
     data = data_i.copy()
@@ -775,11 +797,10 @@ def generarExcel(ind):
 
     worksheet = writer.sheets['Quadre Control']
     worksheet.set_column('B:B', 70)
-    worksheet.set_column('C:C', 20, centered)
-    worksheet.set_column('D:D', 20, centered)
-    worksheet.set_column('E:E', 20, centered)
-    worksheet.set_column('F:F', 20, centered)
-    
+    # Dynamically format columns based on the number of indices
+    for i in range(len(inds) + 1):
+        col = chr(ord('C') + i)
+        worksheet.set_column(f'{col}:{col}', 20, centered)
 
     #Alarmas
     alarmas1 = alarms_baja(stock_data)
@@ -1024,12 +1045,12 @@ def generarExcel(ind):
     
 num = 1
 while num!=0:
-    num = int(input('Quin informe vols generar?\n1.IBEX\n2.NASDAQ\n3.DOWJONES\n4.SP500\n0.EXIT\n--> '))
+    num = int(input('Quin informe vols generar?\n1.IBEX\n2.NASDAQ\n3.DOWJONES\n4.SP500\n5.NASDAQ 100\n6.EURO STOXX 50\n7.DAX\n8.CAC 40\n9.FTSE 100\n10.HANG SENG\n0.EXIT\n--> '))
     # Read tables
-    #inds = ["^IBEX"]
     if num!=0:
-        inds = ["^IBEX", "^IXIC", "^DJI", "^GSPC"]
+        inds = ["^IBEX", "^IXIC", "^DJI", "^GSPC", "^NDX", "^STOXX50E", "^GDAXI", "^FCHI", "^FTSE", "^HSI"]
         ind = inds[num-1]
-        stock_dict = {"^IBEX":"IBEX", "^IXIC":"NASDAQ",\
-                    "^DJI":"DOWJONES", "^GSPC": "SP500"}
+        stock_dict = {"^IBEX":"IBEX", "^IXIC":"NASDAQ", "^DJI":"DOWJONES", "^GSPC": "SP500", 
+                     "^NDX": "NASDAQ100", "^STOXX50E": "EUROSTOXX50", "^GDAXI": "DAX", 
+                     "^FCHI": "CAC40", "^FTSE": "FTSE100", "^HSI": "HANGSENG"}
         generarExcel(ind)
