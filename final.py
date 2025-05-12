@@ -229,7 +229,7 @@ def notas_tables(data_i):
     data['FDM'] = data.Month!=data.Month.shift(1) #Last Day of Month
     data['PDM'] = data.Month!=data.Month.shift(-1) #First Day of Month
     data['Close_ant'] = data.Close.shift(-1)
-    years = data.Year.unique()[1:3]
+    years = list(data.Year.unique())[:3]  # Get the three most recent years
     notas_tables={}
     for year in years:
         data_t = data[data.Year==year]
@@ -241,7 +241,7 @@ def notas_tables(data_i):
         df = pd.DataFrame([inicis,maxims,perc_max,minims,perc_min]).T
         df.columns = ['Inici','Maxim','%Max','Minim','%Min']
         df.index = ['Gener','Febrer','Març','Abril','Maig','Juny','Juliol','Agost','Septembre',
-                   'Octubre','Novembre','Decembre']
+                   'Octubre','Novembre','Decembre'][:len(df.index)]
         notas_tables[year] = df
     return notas_tables
 
@@ -952,11 +952,15 @@ def generarExcel(ind):
     # Notas
     notas_tabs = notas_tables(stock_data)
     years = list(notas_tabs.keys())
-    notas_tabs[years[0]].to_excel(writer, sheet_name = 'Notas', startrow = 1, startcol = 1)
-    notas_tabs[years[1]].to_excel(writer, sheet_name = 'Notas', startrow = 16, startcol = 1)
-    worksheet = writer.sheets['Notas']
-    worksheet.write(1, 1, str(years[0]))
-    worksheet.write(16, 1, str(years[1]))
+    
+    # Add spacing and headers for each year
+    row_position = 1
+    for i, year in enumerate(years):
+        notas_tabs[year].to_excel(writer, sheet_name='Notas', startrow=row_position, startcol=1)
+        worksheet = writer.sheets['Notas']
+        worksheet.write(row_position, 1, str(year))
+        row_position += 15  # Add spacing between tables
+    
     worksheet.set_column('B1:G100', 10, black_text)
     worksheet.conditional_format('E1:E100', {'type':     'cell',
                                         'criteria': '<',
