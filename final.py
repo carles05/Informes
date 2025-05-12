@@ -214,7 +214,6 @@ def year_trim_aux(table):
     trim_porcentajes.drop(columns='Count', inplace=True)
     return promedios_trim, year_total, alza_baja, trim_porcentajes
 
-
 def notas_tables(data_i):
     data = data_i.copy()
     data['FDM'] = data.Month!=data.Month.shift(1) #Last Day of Month
@@ -353,9 +352,6 @@ def year_month_aux(data):
     meses_porcentajes.drop(columns='Count', inplace=True)
     return total_year, alza_baja, medias, promedios, meses_porcentajes
 
-ind = "^IBEX"
-data = read_data(ind)
-data
 def calculos_table(data, semanas=20):
     data_f = data.copy()
     data_f['LDW'] = data_f.Week != data_f.Week.shift(1)

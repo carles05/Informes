@@ -91,13 +91,13 @@ def year_trim_aux(table):
     promedios_trim = pd.DataFrame()
     trimestres = table[['Trim 1','Trim 2','Trim 3','Trim 4']]
     year_total = trimestres.sum(axis=1)
-    year_total.header = 'Año'
+    year_total.header = 'Any'
     promedios_trim['%Sube'] = trimestres[trimestres>0].count(axis = 0)/trimestres.count(axis = 0)*100
     promedios_trim['%Baja'] = trimestres[trimestres<0].count(axis = 0)/trimestres.count(axis = 0)*100
     promedios_trim['Promedio Subida'] = trimestres[trimestres>0].mean(axis = 0)
     promedios_trim['Promedio Bajada'] = trimestres[trimestres<0].mean(axis = 0)
     promedios_trim = promedios_trim.T
-    promedios_trim['Año'] = [len(year_total[year_total>0])/len(year_total)*100,
+    promedios_trim['Any'] = [len(year_total[year_total>0])/len(year_total)*100,
                             len(year_total[year_total<0])/len(year_total)*100,
                             year_total[year_total>0].mean(axis = 0),
                             year_total[year_total<0].mean(axis = 0)]

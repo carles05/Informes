@@ -97,7 +97,7 @@ def generarExcel(ind):
     table_trim = year_trim_table(stock_data)
     promedios_trim, year_total, alza_baja, trim_porcentajes = year_trim_aux(table_trim)
     table_trim.to_excel(writer, sheet_name='Resumen Trimestral', startcol=1, startrow=1)
-    year_total = pd.DataFrame(year_total,columns=['Año'])
+    year_total = pd.DataFrame(year_total,columns=['Any'])
     year_total.to_excel(writer, sheet_name='Resumen Trimestral', startcol=18, startrow=1, index=False)
     years = pd.DataFrame(table_trim.index)
     years.to_excel(writer, sheet_name='Resumen Trimestral', startcol=19, startrow=2, header=False, index=False)
