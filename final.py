@@ -5,6 +5,8 @@ import pandas as pd
 from datetime import date
 import math
 import time
+import warnings
+warnings.filterwarnings("ignore")
 
 try:
     # Try to import curl_cffi to handle Yahoo Finance rate limits
