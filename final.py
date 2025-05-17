@@ -382,7 +382,7 @@ def calculos_table(data, semanas=20):
     data_f["Date"] = data_f.index
     maxset = data_f.groupby(by = ["Year","Week"], as_index=False)["High"].max()
     minset = data_f.groupby(by = ["Year","Week"])["Low"].min()
-    data_f = data_f[data_f["LDW"]==True]
+    data_f = data_f[(data_f["LDW"]==True) | (data_f.LDW.isna())]
     data_f = data_f.head(semanas+15)
     data_f = pd.merge(data_f,maxset,how='left',on=['Year','Week'])
     data_f = pd.merge(data_f,minset,how='left',on=['Year','Week'])
